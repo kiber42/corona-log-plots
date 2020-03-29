@@ -1,20 +1,23 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python3
-import sys
+import sys, os
 import csv
+import datetime as dt
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from datetime import datetime, timedelta
+
+save_to_disk = True
+show_plots = True
 
 class Country:
     def __init__(self, data_tuple):
         self.province, self.name = data_tuple[:2]
         self.latitude = float(data_tuple[2])
         self.longitude = float(data_tuple[3])
-        self.id = self.name
+        self.full_name = self.name
         if self.province:
-            self.id += " " + self.province
+            self.full_name += " " + self.province
 
     def __repr__(self):
         name = self.name
@@ -53,11 +56,11 @@ def load_data(filename):
         reader = csv.reader(csvfile, delimiter=',')
         fieldnames = reader.__next__()
         assert(fieldnames[:4] == ['Province/State', 'Country/Region', 'Lat', 'Long'])
-        dates = [datetime.strptime(d, '%m/%d/%y').date() for d in fieldnames[4:]]
+        dates = [dt.datetime.strptime(d, '%m/%d/%y').date() for d in fieldnames[4:]]
         for row in reader:
             c = Country(tuple(row[:4]))
-            countries[c.id] = c
-            values[c.id] = tuple(int(item) for item in row[4:])
+            countries[c.full_name] = c
+            values[c.full_name] = tuple(int(item) for item in row[4:])
     return Dataset(countries, dates, values)
 
 
@@ -68,8 +71,6 @@ def main(countries):
         Entry("recovered", color="C2"),
         Entry("deaths", color="C3"),
         Entry("deaths", color="C5", label="infected (estimated)", date_offset=-17, scale=100),
-#        Entry("recovered", color="C2", date_offset=-17),
-#        Entry("deaths", color="C3", date_offset=-22),
         ]
     datasets = {}
     for entry in entries:
@@ -79,7 +80,7 @@ def main(countries):
     all_countries = next(iter(datasets.values())).countries
     all_dates = [d for dataset in datasets.values() for d in dataset.dates]
     date_start = min(all_dates)
-    date_end = max(all_dates) + timedelta(5)
+    date_end = max(all_dates) + dt.timedelta(5)
     options = {
         "yscale": "log",
         "ylim": (0.9, 1e6),
@@ -88,24 +89,31 @@ def main(countries):
 
     for country in countries:
         if not country in all_countries:
-            print("Country '{}' not found.".format(country))
-            continue
+            # Try to find matching state/province
+            country = next((c.full_name for c in all_countries.values() if c.province == country), None)
+            if country is None:
+                print("Country '{}' not found.".format(country))
+                continue
         fig, ax = plt.subplots()
-        ax.set(title=all_countries[country].name, **options)
+        ax.set(title=all_countries[country].full_name, **options)
         ax.grid(b=True, which='major')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m'))
         ax.xaxis.set_major_locator(mdates.MonthLocator())
         ax.xaxis.set_minor_locator(mdates.WeekdayLocator())
         for entry in entries:
             dataset = datasets[entry.tag]
-            data_x = np.array(dataset.dates) + timedelta(entry.date_offset)
+            data_x = np.array(dataset.dates) + dt.timedelta(entry.date_offset)
             data_y = np.array(dataset.values[country]) * entry.scale
             ax.scatter(data_x, data_y, label=entry.label, color=entry.color)
         legend = ax.legend(loc='upper left', shadow=True, fontsize='x-large')
         legend.get_frame().set_facecolor('C4')
         fig.autofmt_xdate()
+        if save_to_disk:
+            os.makedirs("figures", exist_ok=True)
+            fig.savefig("figures/{}.png".format(all_countries[country].full_name))
 
-    plt.show()
+    if show_plots:
+        plt.show()
 
 
 if __name__ == "__main__":

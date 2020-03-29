@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 import sys
 import csv
@@ -44,13 +45,18 @@ def load_data(filename):
 
 def main(countries):
     pattern = "time_series_data/time_series_covid19_{}_global.csv"
-    groups = ["confirmed", "deaths", "recovered"]
-    date_offsets = [0, -22, -17]
+    groups = [
+        { "tag": "confirmed", "date_offset": 0, "scale": 1, "color": "C1" },
+#        { "tag": "recovered", "date_offset": -17, "scale": 1, "color": "C2" },
+#        { "tag": "deaths", "date_offset": -22, "scale": 1, "color": "C3" },
+        { "tag": "recovered", "date_offset": 0, "scale": 1, "color": "C2" },
+        { "tag": "deaths", "date_offset": 0, "scale": 1, "color": "C3" },        
+        { "tag": "deaths", "label" : "infected (estimated)", "date_offset": -17, "scale": 100, "color": "C5" },
+        ]
     datasets = {}
     for group in groups:
-        file_name = pattern.format(group)
-#        print("Loading data for {} from {}".format(group, file_name))
-        datasets[group] = load_data(file_name)
+        file_name = pattern.format(group["tag"])
+        datasets[group["tag"]] = load_data(file_name)
     # assume that dates and countries are identical among the input files
     dates = next(iter(datasets.values())).dates
     all_countries = next(iter(datasets.values())).countries
@@ -60,6 +66,7 @@ def main(countries):
     options = {"xlabel" : "days since {}".format(day_one),
                "ylabel" : "n",
                "yscale" :"log",
+               "xlim" : (0, len(dates)),
                "ylim" :(0.9, 1e6)}
     
     for country in countries:
@@ -67,13 +74,18 @@ def main(countries):
             print("Country '{}' not found.".format(country))
             continue
         fig, ax = plt.subplots()
-        for i,g in enumerate(groups):
-            data_y = datasets[g].values[country]
-            offset = date_offsets[i]
-            ax.scatter(data_x + offset, data_y,
-                       label="{} shifted by {} days".format(g, offset) if offset else g)
-            ax.set(title=all_countries[country].name, **options)
-            ax.grid()
+        ax.set(title=all_countries[country].name, **options)
+        ax.grid(b=True, which='major')
+        for i, group in enumerate(groups):
+            tag = group["tag"]
+            data_y = datasets[tag].values[country]
+            offset = group["date_offset"]
+            scale = group["scale"]
+            auto_label = "{} shifted by {} days".format(tag, offset) if offset else tag
+            ax.scatter(data_x + offset, np.array(data_y) * scale,
+                       label=group["label"] if "label" in group else auto_label,
+                       color=group["color"]
+            )
         legend = ax.legend(loc='upper left', shadow=True, fontsize='x-large')
         legend.get_frame().set_facecolor('C4')
 

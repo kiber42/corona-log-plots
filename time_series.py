@@ -30,6 +30,22 @@ class Dataset:
         self.values = values
 
 
+class Entry:
+    def __init__(self, tag, color, label=None, date_offset=0, scale=1):
+        self.tag = tag
+        if label is None:
+            self.label = tag
+            if date_offset:
+                self.label += " shifted by {} days".format(date_offset)
+            if scale != 1:
+                self.label += " (x{})".format(scale)
+        else:
+            self.label = label
+        self.color = color
+        self.date_offset = date_offset
+        self.scale = scale
+
+
 def load_data(filename):
     countries = {}
     values = {}
@@ -47,21 +63,20 @@ def load_data(filename):
 
 def main(countries):
     pattern = "time_series_data/time_series_covid19_{}_global.csv"
-    groups = [
-        { "tag": "confirmed", "date_offset": 0, "scale": 1, "color": "C1" },
-#        { "tag": "recovered", "date_offset": -17, "scale": 1, "color": "C2" },
-#        { "tag": "deaths", "date_offset": -22, "scale": 1, "color": "C3" },
-        { "tag": "recovered", "date_offset": 0, "scale": 1, "color": "C2" },
-        { "tag": "deaths", "date_offset": 0, "scale": 1, "color": "C3" },
-        { "tag": "deaths", "label" : "infected (estimated)", "date_offset": -17, "scale": 100, "color": "C5" },
+    entries = [
+        Entry("confirmed", color="C1"),
+        Entry("recovered", color="C2"),
+        Entry("deaths", color="C3"),
+        Entry("deaths", color="C5", label="infected (estimated)", date_offset=-17, scale=100),
+#        Entry("recovered", color="C2", date_offset=-17),
+#        Entry("deaths", color="C3", date_offset=-22),
         ]
     datasets = {}
-    for group in groups:
-        file_name = pattern.format(group["tag"])
-        datasets[group["tag"]] = load_data(file_name)
+    for entry in entries:
+        file_name = pattern.format(entry.tag)
+        datasets[entry.tag] = load_data(file_name)
     # assume that countries are identical among the input files
     all_countries = next(iter(datasets.values())).countries
-
     all_dates = [d for dataset in datasets.values() for d in dataset.dates]
     date_start = min(all_dates)
     date_end = max(all_dates) + timedelta(5)
@@ -81,17 +96,11 @@ def main(countries):
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m'))
         ax.xaxis.set_major_locator(mdates.MonthLocator())
         ax.xaxis.set_minor_locator(mdates.WeekdayLocator())
-        for i, group in enumerate(groups):
-            tag = group["tag"]
-            offset = group["date_offset"]
-            data_x = np.array(datasets[tag].dates) + timedelta(offset)
-            data_y = datasets[tag].values[country]
-            scale = group["scale"]
-            auto_label = "{} shifted by {} days".format(tag, offset) if offset else tag
-            ax.scatter(data_x, np.array(data_y) * scale,
-                       label=group["label"] if "label" in group else auto_label,
-                       color=group["color"]
-            )
+        for entry in entries:
+            dataset = datasets[entry.tag]
+            data_x = np.array(dataset.dates) + timedelta(entry.date_offset)
+            data_y = np.array(dataset.values[country]) * entry.scale
+            ax.scatter(data_x, data_y, label=entry.label, color=entry.color)
         legend = ax.legend(loc='upper left', shadow=True, fontsize='x-large')
         legend.get_frame().set_facecolor('C4')
         fig.autofmt_xdate()

@@ -6,7 +6,7 @@ In logarithmic scale, an exponential growth appears as a straight line.  Therefo
 
 A simple estimate of the actual number of infected people is obtained by shifting the most reliable number (the number of deaths) back by 17 days, which is the approximate time it takes from infection to death.  It is scaled up by a factor of 100, to account for the *guessed* 1% lethality of the COVID-19 disease.  Although it is a rough approximation, comparing this line with the number of reported number of confirmed cases can be interesting.
 
-This package contains the plotting code and a selection of example figures (in the `figures` sub-directory).  To make additional and more up-to-date figures, you need to retrieve the current data from the John Hopkins University:
+This package contains the plotting code and a selection of example figures (in the `examples` subdirectory).  To make additional and more up-to-date figures, you need to retrieve the current data from the John Hopkins University:
 ```
 git clone https://github.com/kiber42/corona-log-plots.git
 cd corona-log-plots

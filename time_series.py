@@ -29,7 +29,7 @@ class Country:
         name = self.name
         if self.province:
             name += " ({})".format(self.province)
-        return "{0} ({1:.2f}°, {2:.2f}°)".format(name, self.latitude, self.longitude)
+        return "{0} ({1:.1f}°, {2:.1f}°)".format(name, self.latitude, self.longitude)
 
 
 class Dataset:
@@ -86,11 +86,11 @@ def main(countries):
     all_countries = next(iter(datasets.values())).countries
     all_dates = [d for dataset in datasets.values() for d in dataset.dates]
     date_start = min(all_dates)
-    date_end = max(all_dates) + dt.timedelta(5)
+    date_end = max(all_dates)
     options = {
         "yscale": "log",
-        "ylim": (0.9, 1e6),
-        "xlim": (date_start, date_end),
+        "ylim": (0.9, 1e7),
+        "xlim": (date_start, date_end + dt.timedelta(5)),
     }
 
     for country in countries:
@@ -101,11 +101,12 @@ def main(countries):
                 print("Country '{}' not found.".format(country))
                 continue
         fig, ax = plt.subplots()
-        ax.set(title=all_countries[country].full_name, **options)
+        title = "{} up to {}".format(all_countries[country].full_name, date_end)
+        ax.set(title=title, **options)
         ax.grid(b=True, which='major')
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m'))
         ax.xaxis.set_major_locator(mdates.MonthLocator())
-        ax.xaxis.set_minor_locator(mdates.WeekdayLocator())
+        ax.xaxis.set_minor_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
         for entry in entries:
             dataset = datasets[entry.tag]
             data_x = np.array(dataset.dates) + dt.timedelta(entry.date_offset)

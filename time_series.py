@@ -10,6 +10,8 @@ import matplotlib.dates as mdates
 save_to_disk = True
 show_plots = True
 
+data_dir = "COVID-19/csse_covid_19_data/csse_covid_19_time_series"
+
 class Country:
     def __init__(self, data_tuple):
         self.province, self.name = data_tuple[:2]
@@ -65,7 +67,7 @@ def load_data(filename):
 
 
 def main(countries):
-    pattern = "time_series_data/time_series_covid19_{}_global.csv"
+    pattern = os.path.join(data_dir, "time_series_covid19_{}_global.csv")
     entries = [
         Entry("confirmed", color="C1"),
         Entry("recovered", color="C2"),

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import sys, os
 import csv
 import datetime as dt
@@ -7,10 +7,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-save_to_disk = True
+# Path for saving output images, set to None if you do not want to save
+save_dir = "figures"
+# Attempt to show interactive figures, may not work in some environments
 show_plots = True
-
+# Path were the csv files with the input data are located
 data_dir = "COVID-19/csse_covid_19_data/csse_covid_19_time_series"
+# Countries to show by default if none are given on the command line
+default_countries = ["Germany"]
 
 class Country:
     def __init__(self, data_tuple):
@@ -110,15 +114,16 @@ def main(countries):
         legend = ax.legend(loc='upper left', shadow=True, fontsize='x-large')
         legend.get_frame().set_facecolor('C4')
         fig.autofmt_xdate()
-        if save_to_disk:
-            os.makedirs("figures", exist_ok=True)
-            fig.savefig("figures/{}.png".format(all_countries[country].full_name))
+        if save_dir is not None:
+            os.makedirs(save_dir, exist_ok=True)
+            filename = os.path.join(save_dir, "{}.png".format(country.full_name))
+            fig.savefig(filename)
+            print("Plot for {} saved to {}".format(country.full_name, filename))
 
     if show_plots:
         plt.show()
 
 
 if __name__ == "__main__":
-    default_country = "Germany"
-    countries = sys.argv[1:] if len(sys.argv) > 1 else [default_country]
-    main(countries)
+    country_names = sys.argv[1:] if len(sys.argv) > 1 else default_countries
+    main(country_names)

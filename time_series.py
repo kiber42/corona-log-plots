@@ -117,9 +117,9 @@ def main(countries):
         fig.autofmt_xdate()
         if save_dir is not None:
             os.makedirs(save_dir, exist_ok=True)
-            filename = os.path.join(save_dir, "{}.png".format(country.full_name))
+            filename = os.path.join(save_dir, "{}.png".format(country))
             fig.savefig(filename)
-            print("Plot for {} saved to {}".format(country.full_name, filename))
+            print("Plot for {} saved to {}".format(country, filename))
 
     if show_plots:
         plt.show()

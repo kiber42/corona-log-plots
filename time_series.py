@@ -56,19 +56,27 @@ class Entry:
         self.scale = scale
 
 
+def process_header_row(row):
+    assert(row[:4] == ['Province/State', 'Country/Region', 'Lat', 'Long'])
+    dates = [dt.datetime.strptime(date, '%m/%d/%y').date() for date in row[4:]]
+    return dates, 4
+
+
+def process_row(row, format_info):
+    c = Country(tuple(row[:4]))
+    row_data = np.array([int(item) for item in row[format_info:]])
+    return c, row_data
+
 def load_data(filename):
     countries = {}
     computed = {}
     values = {}
     with open(filename) as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
-        fieldnames = reader.__next__()
-        assert(fieldnames[:4] == ['Province/State', 'Country/Region', 'Lat', 'Long'])
-        dates = [dt.datetime.strptime(d, '%m/%d/%y').date() for d in fieldnames[4:]]
+        dates, format_info = process_header_row(reader.__next__())
         for row in reader:
-            c = Country(tuple(row[:4]))
+            c, row_data = process_row(row, format_info)
             countries[c.full_name] = c
-            row_data = np.array([int(item) for item in row[4:]])
             values[c.full_name] = row_data
             # Compute sums for states where individual provinces are listed
             if c.province:

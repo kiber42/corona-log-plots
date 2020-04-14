@@ -96,10 +96,7 @@ def load_data(filename):
             if c.province:
                 placeholder = c.name + " ALL"
                 if placeholder in computed:
-                    print(placeholder, "-- ADDING", c.province)
-                    print("  Sum before: ", values[placeholder][-1], end='')
                     values[placeholder] += row_data
-                    print("  Sum after: ", values[placeholder][-1])
                 else:
                     # Create new synthetic entry; copy Country and data row to
                     # ensure that original entry is not affected!

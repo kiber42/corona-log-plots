@@ -26,4 +26,9 @@ python3 time_series.py US "United Kingdom" Germany China
 
 Since there is no data for China as a whole available, the sum of all available regions in China will be computed and shown.  For some countries, e.g. France, data for the whole country and for individual regions is available.  It is possible to refer to the sum of all regional data for France as `"France ALL"` (it's important to include the quotation marks on the command line).  By comparing `France` and `"France ALL"` you will see that the numbers are very different.  For the case of France, this is because `France` apparently refers to mainland France, while the regions refer to French islands such as Guadeloupe or Martinique.  Whenever you are in doubt about what is shown in the figures, it is probably a good idea to look at the original data tables.
 
+Johns Hopkins University provides a dedicated dataset with more fine-grained information for the United States of America.  To use this dataset instead of the global one, provide the `--us` command-line switch together with the states or counties (not cities!) you are interested in.  To see data for Manhattan (New York County), you need to type `"New York New York"` if you want to see data for New York City.  Just `"New York"` will show results for New York state.
+```
+python3 time_series.py --us "New York New York" "Illinois Cook" Michigan California
+```
+
 The figures are saved to disk as png files in a subdirectory named `figures`.  If supported by the matplotlib backend, they are also displayed on screen, hit `Ctrl+C` on the terminal to close all at once.

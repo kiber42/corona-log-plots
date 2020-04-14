@@ -14,6 +14,9 @@ save_dir = "figures"
 show_plots = True
 # Path were the csv files with the input data are located
 data_dir = "COVID-19/csse_covid_19_data/csse_covid_19_time_series"
+# Filename pattern, placeholder {} is replaced by confirmed, recovered or deaths
+filename_pattern_global = "time_series_covid19_{}_global.csv"
+filename_pattern_US = "time_series_covid19_{}_US.csv"
 # Countries to show by default if none are given on the command line
 default_countries = ["Germany"]
 
@@ -57,15 +60,26 @@ class Entry:
 
 
 def process_header_row(row):
-    assert(row[:4] == ['Province/State', 'Country/Region', 'Lat', 'Long'])
-    dates = [dt.datetime.strptime(date, '%m/%d/%y').date() for date in row[4:]]
-    return dates, 4
+    if "Admin2" in row:
+        # When running on US data: Use City+State instead of State+Country
+        target_columns = ["Admin2", "Province_State", "Lat", "Long_"]
+    else:
+        target_columns = ["Province/State", "Country/Region", "Lat", "Long"]
+    # Use first date with available data as marker
+    target_columns.append("1/22/20")
+    format_info = tuple(row.index(col) for col in target_columns)
+    data_start = format_info[4]
+    dates = [dt.datetime.strptime(date, '%m/%d/%y').date() for date in row[data_start:]]
+    return dates, format_info
 
 
 def process_row(row, format_info):
-    c = Country(tuple(row[:4]))
-    row_data = np.array([int(item) for item in row[format_info:]])
+    country_info = tuple(row[index] for index in format_info[:4])
+    c = Country(country_info)
+    data_start = format_info[4]
+    row_data = np.array([int(item) for item in row[data_start:]])
     return c, row_data
+
 
 def load_data(filename):
     countries = {}
@@ -105,8 +119,8 @@ def load_data(filename):
     return Dataset(countries, dates, values)
 
 
-def main(countries):
-    pattern = os.path.join(data_dir, "time_series_covid19_{}_global.csv")
+def main(countries, filename_pattern):
+    pattern = os.path.join(data_dir, filename_pattern)
     entries = [
         Entry("confirmed", color="C1"),
         Entry("recovered", color="C2"),
@@ -116,7 +130,10 @@ def main(countries):
     datasets = {}
     for entry in entries:
         file_name = pattern.format(entry.tag)
-        datasets[entry.tag] = load_data(file_name)
+        try:
+            datasets[entry.tag] = load_data(file_name)
+        except FileNotFoundError:
+            print("No data for {}".format(entry.tag))
     # assume that countries are identical among the input files
     all_countries = next(iter(datasets.values())).countries
     all_dates = [d for dataset in datasets.values() for d in dataset.dates]
@@ -144,7 +161,10 @@ def main(countries):
         ax.xaxis.set_major_locator(mdates.MonthLocator())
         ax.xaxis.set_minor_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
         for entry in entries:
-            dataset = datasets[entry.tag]
+            try:
+                dataset = datasets[entry.tag]
+            except KeyError:
+                continue
             data_x = np.array(dataset.dates) + dt.timedelta(entry.date_offset)
             data_y = dataset.values[country] * entry.scale
             ax.scatter(data_x, data_y, label=entry.label, color=entry.color)
@@ -162,5 +182,15 @@ def main(countries):
 
 
 if __name__ == "__main__":
-    country_names = sys.argv[1:] if len(sys.argv) > 1 else default_countries
-    main(country_names)
+    country_names = []
+    us_mode = False
+    for token in sys.argv[1:]:
+        if token.startswith("-") and token.lower().replace("-", "") == "us":
+            us_mode = True
+        else:
+            country_names.append(token)
+    if len(country_names) == 0:
+        country_names = ["US"] if us_mode else default_countries
+
+    pattern = filename_pattern_US if us_mode else filename_pattern_global
+    main(country_names, pattern)

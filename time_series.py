@@ -24,8 +24,11 @@ default_items_US = ["New York"]
 class Country:
     def __init__(self, data_tuple):
         self.province, self.name = data_tuple[:2]
-        self.latitude = float(data_tuple[2])
-        self.longitude = float(data_tuple[3])
+        try:
+            self.latitude = float(data_tuple[2])
+            self.longitude = float(data_tuple[3])
+        except ValueError:
+            self.latitude, self.longitude = 0, 0
         self.full_name = self.name
         if self.province:
             self.full_name += " " + self.province

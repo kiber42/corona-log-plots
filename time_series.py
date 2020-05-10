@@ -7,6 +7,7 @@ import datetime as dt
 import math
 
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import matplotlib.dates as mdates
 import numpy as np
 from scipy import polyfit
@@ -135,6 +136,11 @@ def fit_log_slope(data_x, data_y, days_fit, days_extrapolate):
     return fit_x, fit_y, double_time
 
 
+def darken_color(color, scale = 0.5):
+    rgb = mcolors.to_rgb(color)
+    return tuple(np.array(rgb) * scale)
+
+
 def plot_dataset_entry(axis, dates, values, entry):
     data_x = np.array(dates) + dt.timedelta(entry.date_offset)
     data_y = values * entry.scale
@@ -142,7 +148,7 @@ def plot_dataset_entry(axis, dates, values, entry):
     fit_x, fit_y, double_time = fit_log_slope(data_x, data_y, days_fit=5, days_extrapolate=10)
     label = entry.label + " ({:.1f} days)".format(double_time)
     axis.scatter(data_x, data_y, label=label, color=entry.color)
-    axis.plot(fit_x, fit_y, color="black")
+    axis.plot(fit_x, fit_y, color=darken_color(entry.color))
 
 
 def auto_find_country(search_name, all_countries):
@@ -157,7 +163,7 @@ def auto_find_country(search_name, all_countries):
 
 
 def plot_one_country(country_name, datasets, entries, title, options):
-    fig, axis = plt.subplots()
+    fig, axis = plt.subplots(figsize=(8, 8))
     axis.set(title=title, **options)
     axis.grid(b=True, which='major')
     axis.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m'))
@@ -172,6 +178,7 @@ def plot_one_country(country_name, datasets, entries, title, options):
     legend = axis.legend(loc='upper left', shadow=True, fontsize='x-large')
     legend.get_frame().set_facecolor('C4')
     fig.autofmt_xdate()
+    plt.tight_layout()
     return fig
 
 

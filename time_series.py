@@ -135,6 +135,55 @@ def fit_log_slope(data_x, data_y, days_fit, days_extrapolate):
     return fit_x, fit_y, double_time
 
 
+def plot_dataset_entry(axis, dates, values, entry):
+    data_x = np.array(dates) + dt.timedelta(entry.date_offset)
+    data_y = values * entry.scale
+    # Linear fit (to log scale data) for last few days
+    fit_x, fit_y, double_time = fit_log_slope(data_x, data_y, days_fit=5, days_extrapolate=10)
+    label = entry.label + " ({:.1f} days)".format(double_time)
+    axis.scatter(data_x, data_y, label=label, color=entry.color)
+    axis.plot(fit_x, fit_y, color="black")
+
+
+def auto_find_country(search_name, all_countries):
+    if search_name in all_countries:
+        return search_name
+    # Try to expand name to see if there is a matching state/province
+    selected = next((c.full_name for c in all_countries.values() if c.province == search_name), None)
+    if selected is None:
+        print("Country '{}' not found.".format(search_name))
+        return None
+    return selected
+
+
+def plot_one_country(country_name, datasets, entries, title, options):
+    fig, axis = plt.subplots()
+    axis.set(title=title, **options)
+    axis.grid(b=True, which='major')
+    axis.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m'))
+    axis.xaxis.set_major_locator(mdates.MonthLocator())
+    axis.xaxis.set_minor_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
+    for entry in entries:
+        try:
+            dataset = datasets[entry.tag]
+        except KeyError:
+            continue
+        plot_dataset_entry(axis, dataset.dates, dataset.values[country_name], entry)
+    legend = axis.legend(loc='upper left', shadow=True, fontsize='x-large')
+    legend.get_frame().set_facecolor('C4')
+    fig.autofmt_xdate()
+    return fig
+
+
+def save_figure(fig, name):
+    if save_dir is None:
+        return
+    os.makedirs(save_dir, exist_ok=True)
+    filename = os.path.join(save_dir, "{}.png".format(name))
+    fig.savefig(filename)
+    print("Plot for {} saved to {}".format(name, filename))
+
+
 def main(countries, filename_pattern):
     pattern = os.path.join(data_dir, filename_pattern)
     entries = [
@@ -161,41 +210,13 @@ def main(countries, filename_pattern):
         "xlim": (date_start, date_end + dt.timedelta(5)),
     }
 
-    for country in countries:
-        if not country in all_countries:
-            # Try to expand name if there is a matching state/province
-            selected = next((c.full_name for c in all_countries.values() if c.province == country), None)
-            if selected is None:
-                print("Country '{}' not found.".format(country))
-                continue
-            country = selected
-        fig, ax = plt.subplots()
-        title = "{} up to {}".format(all_countries[country].full_name, date_end)
-        ax.set(title=title, **options)
-        ax.grid(b=True, which='major')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m'))
-        ax.xaxis.set_major_locator(mdates.MonthLocator())
-        ax.xaxis.set_minor_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
-        for entry in entries:
-            try:
-                dataset = datasets[entry.tag]
-            except KeyError:
-                continue
-            data_x = np.array(dataset.dates) + dt.timedelta(entry.date_offset)
-            data_y = dataset.values[country] * entry.scale
-            # Linear fit (to log scale data) for last few days
-            fit_x, fit_y, double_time = fit_log_slope(data_x, data_y, days_fit=5, days_extrapolate=10)
-            label = entry.label + " ({:.1f} days)".format(double_time)
-            ax.scatter(data_x, data_y, label=label, color=entry.color)
-            ax.plot(fit_x, fit_y, color="black")
-        legend = ax.legend(loc='upper left', shadow=True, fontsize='x-large')
-        legend.get_frame().set_facecolor('C4')
-        fig.autofmt_xdate()
-        if save_dir is not None:
-            os.makedirs(save_dir, exist_ok=True)
-            filename = os.path.join(save_dir, "{}.png".format(country))
-            fig.savefig(filename)
-            print("Plot for {} saved to {}".format(country, filename))
+    for c in countries:
+        country_name = auto_find_country(c, all_countries)
+        if not country_name:
+            continue
+        title = "{} up to {}".format(all_countries[country_name].full_name, date_end)
+        fig = plot_one_country(country_name, datasets, entries, title, options)
+        save_figure(fig, country_name)
 
     if show_plots:
         plt.show()

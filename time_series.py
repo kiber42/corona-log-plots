@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys, os
+from copy import deepcopy
 import csv
 import datetime as dt
-import numpy as np
+import math
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from copy import deepcopy
+import numpy as np
+from scipy import polyfit
 
 # Path for saving output images, set to None if you do not want to save
 save_dir = "figures"
@@ -120,6 +123,18 @@ def load_data(filename):
     return Dataset(countries, dates, values)
 
 
+def fit_log_slope(data_x, data_y, days_fit, days_extrapolate):
+    slope, offset = polyfit(range(days_fit), np.log(data_y[-days_fit:]), 1)
+    n_days = days_fit + days_extrapolate
+    fit_x = [0, n_days]
+    fit_y = np.exp(np.array(fit_x) * slope + offset)
+    # Align x values to input data_x
+    first_day = data_x[-days_fit]
+    fit_x = [first_day + dt.timedelta(days=d) for d in fit_x]
+    double_time = math.log(2) / slope
+    return fit_x, fit_y, double_time
+
+
 def main(countries, filename_pattern):
     pattern = os.path.join(data_dir, filename_pattern)
     entries = [
@@ -142,7 +157,7 @@ def main(countries, filename_pattern):
     date_end = max(all_dates)
     options = {
         "yscale": "log",
-        "ylim": (0.9, 1e7),
+        "ylim": (0.9, 1e8),
         "xlim": (date_start, date_end + dt.timedelta(5)),
     }
 
@@ -168,7 +183,11 @@ def main(countries, filename_pattern):
                 continue
             data_x = np.array(dataset.dates) + dt.timedelta(entry.date_offset)
             data_y = dataset.values[country] * entry.scale
-            ax.scatter(data_x, data_y, label=entry.label, color=entry.color)
+            # Linear fit (to log scale data) for last few days
+            fit_x, fit_y, double_time = fit_log_slope(data_x, data_y, days_fit=5, days_extrapolate=10)
+            label = entry.label + " ({:.1f} days)".format(double_time)
+            ax.scatter(data_x, data_y, label=label, color=entry.color)
+            ax.plot(fit_x, fit_y, color="black")
         legend = ax.legend(loc='upper left', shadow=True, fontsize='x-large')
         legend.get_frame().set_facecolor('C4')
         fig.autofmt_xdate()

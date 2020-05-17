@@ -145,7 +145,7 @@ def plot_dataset_entry(axis, dates, values, entry):
     data_x = np.array(dates) + dt.timedelta(entry.date_offset)
     data_y = values * entry.scale
     # Linear fit (to log scale data) for last few days
-    fit_x, fit_y, double_time = fit_log_slope(data_x, data_y, days_fit=5, days_extrapolate=10)
+    fit_x, fit_y, double_time = fit_log_slope(data_x, data_y, days_fit=10, days_extrapolate=10)
     label = entry.label + " ({:.1f} days)".format(double_time)
     axis.scatter(data_x, data_y, label=label, color=entry.color)
     axis.plot(fit_x, fit_y, color=darken_color(entry.color))
@@ -213,8 +213,8 @@ def main(countries, filename_pattern):
     date_end = max(all_dates)
     options = {
         "yscale": "log",
-        "ylim": (0.9, 1e8),
-        "xlim": (date_start, date_end + dt.timedelta(5)),
+        "ylim": (9, 1e8),
+        "xlim": (date_start + dt.timedelta(30), date_end + dt.timedelta(5)),
     }
 
     for c in countries:

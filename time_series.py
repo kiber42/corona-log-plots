@@ -141,7 +141,7 @@ def darken_color(color, scale = 0.5):
     return tuple(np.array(rgb) * scale)
 
 
-def plot_dataset_entry(axis, dates, values, entry):
+def plot_counts_dataset_entry(axis, dates, values, entry):
     data_x = np.array(dates) + dt.timedelta(entry.date_offset)
     data_y = values * entry.scale
     # Linear fit (to log scale data) for last few days
@@ -149,6 +149,24 @@ def plot_dataset_entry(axis, dates, values, entry):
     label = entry.label + " ({:.1f} days)".format(double_time)
     axis.scatter(data_x, data_y, label=label, color=entry.color)
     axis.plot(fit_x, fit_y, color=darken_color(entry.color))
+
+
+def plot_rate_dataset_entry(axis, dates, values, entry):
+    days_fit = 10
+    if (len(values) < days_fit):
+        return
+    data_x = np.array(dates[days_fit:]) + dt.timedelta(entry.date_offset)
+    data_y = values * entry.scale
+    rate = []
+    # Determine slope in a sliding window (definitely not an efficient way to do this)
+    for start in range(len(data_y) - days_fit):
+        slope, offset = polyfit(range(days_fit), np.log(data_y[start:start+days_fit]), 1)
+        rate.append(slope / math.log(2) if slope < 10 else float('nan'))
+    label = entry.label
+    axis.scatter(data_x, rate, label=label, color=entry.color)
+    ticks_days = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+    axis.set_yticks([1 / d for d in ticks_days])
+    axis.set_yticklabels(["{} day{}".format(d, "s" if d > 1 else "") for d in ticks_days])
 
 
 def auto_find_country(search_name, all_countries):
@@ -162,11 +180,11 @@ def auto_find_country(search_name, all_countries):
     return selected
 
 
-def plot_one_country(country_name, datasets, entries, title, options):
+def plot_one_country(country_name, datasets, entries, title, options, mode):
     fig, axis = plt.subplots(figsize=(8, 8))
     axis.set(title=title, **options)
-    axis.grid(b=True, which='major')
-    axis.xaxis.set_major_formatter(mdates.DateFormatter('%d.%m'))
+    axis.grid(b=True, which="major")
+    axis.xaxis.set_major_formatter(mdates.DateFormatter("%d.%m"))
     axis.xaxis.set_major_locator(mdates.MonthLocator())
     axis.xaxis.set_minor_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
     for entry in entries:
@@ -174,9 +192,13 @@ def plot_one_country(country_name, datasets, entries, title, options):
             dataset = datasets[entry.tag]
         except KeyError:
             continue
-        plot_dataset_entry(axis, dataset.dates, dataset.values[country_name], entry)
-    legend = axis.legend(loc='upper left', shadow=True, fontsize='x-large')
-    legend.get_frame().set_facecolor('C4')
+        if mode == "counts":
+            plot_counts_dataset_entry(axis, dataset.dates, dataset.values[country_name], entry)
+        else:
+            plot_rate_dataset_entry(axis, dataset.dates, dataset.values[country_name], entry)
+    location = "upper left" if mode == "counts" else "upper right"
+    legend = axis.legend(loc=location, shadow=True, fontsize="x-large")
+    legend.get_frame().set_facecolor("C4")
     fig.autofmt_xdate()
     plt.tight_layout()
     return fig
@@ -209,12 +231,17 @@ def main(countries, filename_pattern):
     # assume that countries are identical among the input files
     all_countries = next(iter(datasets.values())).countries
     all_dates = [d for dataset in datasets.values() for d in dataset.dates]
-    date_start = min(all_dates)
-    date_end = max(all_dates)
-    options = {
+    date_start = min(all_dates) + dt.timedelta(30)
+    date_end = max(all_dates) + dt.timedelta(5)
+    options_count = {
         "yscale": "log",
         "ylim": (9, 1e8),
-        "xlim": (date_start + dt.timedelta(30), date_end + dt.timedelta(5)),
+        "xlim": (date_start, date_end),
+    }
+    options_rate = {
+        "yscale": "log",
+        "ylim": (0.8e-3, 1.2),
+        "xlim": (date_start, date_end),
     }
 
     for c in countries:
@@ -222,8 +249,11 @@ def main(countries, filename_pattern):
         if not country_name:
             continue
         title = "{} up to {}".format(all_countries[country_name].full_name, date_end)
-        fig = plot_one_country(country_name, datasets, entries, title, options)
+        fig = plot_one_country(country_name, datasets, entries, title, options_count, mode="counts")
         save_figure(fig, country_name)
+        title = "{}: doubling times, up to {}".format(all_countries[country_name].full_name, date_end)
+        fig = plot_one_country(country_name, datasets, entries, title, options_rate, mode="rate")
+        save_figure(fig, country_name + "_rate")
 
     if show_plots:
         plt.show()

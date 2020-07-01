@@ -232,7 +232,8 @@ def main(countries, filename_pattern):
     all_countries = next(iter(datasets.values())).countries
     all_dates = [d for dataset in datasets.values() for d in dataset.dates]
     date_start = min(all_dates) + dt.timedelta(30)
-    date_end = max(all_dates) + dt.timedelta(5)
+    date_latest = max(all_dates)
+    date_end = date_latest + dt.timedelta(5)
     options_count = {
         "yscale": "log",
         "ylim": (9, 1e8),
@@ -248,10 +249,10 @@ def main(countries, filename_pattern):
         country_name = auto_find_country(c, all_countries)
         if not country_name:
             continue
-        title = "{} up to {}".format(all_countries[country_name].full_name, date_end)
+        title = "{} up to {}".format(all_countries[country_name].full_name, date_latest)
         fig = plot_one_country(country_name, datasets, entries, title, options_count, mode="counts")
         save_figure(fig, country_name)
-        title = "{}: doubling times, up to {}".format(all_countries[country_name].full_name, date_end)
+        title = "{}: doubling times, up to {}".format(all_countries[country_name].full_name, date_latest)
         fig = plot_one_country(country_name, datasets, entries, title, options_rate, mode="rate")
         save_figure(fig, country_name + "_rate")
 

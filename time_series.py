@@ -52,7 +52,7 @@ class Dataset:
 
 
 class Entry:
-    def __init__(self, tag, color, label=None, date_offset=0, scale=1):
+    def __init__(self, tag, color, label=None, date_offset=0, scale=1, duration_days=None):
         self.tag = tag
         if label is None:
             self.label = tag
@@ -65,6 +65,7 @@ class Entry:
         self.color = color
         self.date_offset = date_offset
         self.scale = scale
+        self.duration = duration_days
 
 
 def process_header_row(row):
@@ -141,20 +142,26 @@ def darken_color(color, scale = 0.5):
     return tuple(np.array(rgb) * scale)
 
 
+days_fit = 10
 def plot_counts_dataset_entry(axis, dates, values, entry):
+    values = np.array(values)
+    if entry.duration:
+        values[entry.duration:] -= values[:-entry.duration]
     data_x = np.array(dates) + dt.timedelta(entry.date_offset)
     data_y = values * entry.scale
     # Linear fit (to log scale data) for last few days
-    fit_x, fit_y, double_time = fit_log_slope(data_x, data_y, days_fit=10, days_extrapolate=10)
+    fit_x, fit_y, double_time = fit_log_slope(data_x, data_y, days_fit=days_fit, days_extrapolate=30)
     label = entry.label + " ({:.1f} days)".format(double_time)
     axis.scatter(data_x, data_y, label=label, color=entry.color)
     axis.plot(fit_x, fit_y, color=darken_color(entry.color))
 
 
 def plot_rate_dataset_entry(axis, dates, values, entry):
-    days_fit = 10
     if (len(values) < days_fit):
         return
+    values = np.array(values)
+    if entry.duration:
+        values[entry.duration:] -= values[:-entry.duration]
     data_x = np.array(dates[days_fit:]) + dt.timedelta(entry.date_offset)
     data_y = values * entry.scale
     rate = []
@@ -217,6 +224,7 @@ def main(countries, filename_pattern):
     pattern = os.path.join(data_dir, filename_pattern)
     entries = [
         Entry("confirmed", color="C1"),
+        Entry("confirmed", color="C9", label="confirmed current", duration_days=14),
         Entry("recovered", color="C2"),
         Entry("deaths", color="C3"),
         Entry("deaths", color="C5", label="infected (estimated)", date_offset=-17, scale=100),
@@ -233,7 +241,7 @@ def main(countries, filename_pattern):
     all_dates = [d for dataset in datasets.values() for d in dataset.dates]
     date_start = min(all_dates) + dt.timedelta(30)
     date_latest = max(all_dates)
-    date_end = date_latest + dt.timedelta(5)
+    date_end = date_latest + dt.timedelta(30)
     options_count = {
         "yscale": "log",
         "ylim": (9, 1e8),

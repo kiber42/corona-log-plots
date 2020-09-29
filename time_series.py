@@ -252,9 +252,9 @@ def main(countries, filename_pattern):
         title = "{} up to {}".format(all_countries[country_name].full_name, date_latest)
         fig = plot_one_country(country_name, datasets, entries, title, options_count, mode="counts")
         save_figure(fig, country_name)
-        title = "{}: doubling times, up to {}".format(all_countries[country_name].full_name, date_latest)
-        fig = plot_one_country(country_name, datasets, entries, title, options_rate, mode="rate")
-        save_figure(fig, country_name + "_rate")
+#        title = "{}: doubling times, up to {}".format(all_countries[country_name].full_name, date_latest)
+#        fig = plot_one_country(country_name, datasets, entries, title, options_rate, mode="rate")
+#        save_figure(fig, country_name + "_rate")
 
     if show_plots:
         plt.show()

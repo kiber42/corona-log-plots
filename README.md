@@ -14,6 +14,9 @@ Similarly, the 'recent deaths' curve is derived from the increase of the 'death'
 These modifications were done to make the 'confirmed current' and 'recent deaths' curves appear close to each other in the figure for Germany during the onset of the second wave in October 2020.
 From November 2020 on, a strong divergence between the two becomes visible for the Germany data.
 
+A similar divergence is visible for many countries.
+Some possible causes that may contribute to this effect are: exhausted testing capabilities (leading to an apparent stagnation of confirmed cases while actual cases are rising), an overwhelmed medical system (leading to a higher rate of deaths), or mutations of the virus that are more dangerous and/or less reliably detected by the available tests.
+
 This package contains the plotting code and a selection of example figures (in the `examples` subdirectory).  To make additional and more up-to-date figures, you need to retrieve the current data from the Johns Hopkins University:
 ```
 git clone https://github.com/kiber42/corona-log-plots.git

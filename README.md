@@ -6,7 +6,13 @@ In logarithmic scale, an exponential growth appears as a straight line.  Therefo
 
 A simple estimate of the actual number of infected people is obtained by shifting the most reliable number (the number of deaths) back by 17 days, which is the approximate time it takes from infection to death.  It is scaled up by a factor of 100, to account for the *guessed* 1% lethality of the COVID-19 disease.  Although it is a rough approximation, comparing this line with the number of reported number of confirmed cases can be interesting.
 
-The counts for the most recent ten days are used to compute a trend line.  The estimated duplication time derived from the slope of this trend line is shown in parentheses in the legend.  An additional plot is created that shows the evolution of the estimated duplication time over the course of the crisis.
+The counts for the most recent ten days are used to compute a trend line.  The estimated duplication time derived from the slope of this trend line is shown in parentheses in the legend.
+
+Two additional curves are generated to illustrate the current situation more clearly: 'confirmed current' and 'recent deaths'.
+The 'confirmed current' curve is obtained by only taking into account the increase of the 'confirmed' data over the previous 14 days.
+Similarly, the 'recent deaths' curve is derived from the increase of the 'death' data over the previous 14 days, but modified somewhat arbitrarily by shifting it 7 days to the left and scaling it up by a factor of 150.
+These modifications were done to make the 'confirmed current' and 'recent deaths' curves appear close to each other in the figure for Germany during the onset of the second wave in October 2020.
+From November 2020 on, a strong divergence between the two becomes visible for the Germany data.
 
 This package contains the plotting code and a selection of example figures (in the `examples` subdirectory).  To make additional and more up-to-date figures, you need to retrieve the current data from the Johns Hopkins University:
 ```

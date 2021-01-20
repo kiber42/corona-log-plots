@@ -227,6 +227,7 @@ def main(countries, filename_pattern):
         Entry("confirmed", color="C9", label="confirmed current", duration_days=14),
         Entry("recovered", color="C2"),
         Entry("deaths", color="C3"),
+        Entry("deaths", color="C10", label="recent deaths (scaled)", duration_days=14, date_offset=-7, scale=150),
         Entry("deaths", color="C5", label="infected (estimated)", date_offset=-17, scale=100),
         ]
     datasets = {}

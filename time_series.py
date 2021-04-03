@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.dates as mdates
 import numpy as np
-from scipy import polyfit
+from numpy import polyfit
 
 # Path for saving output images, set to None if you do not want to save
 save_dir = "figures"
@@ -228,6 +228,7 @@ def main(countries, filename_pattern):
         Entry("recovered", color="C2"),
         Entry("deaths", color="C3"),
         Entry("deaths", color="C5", label="infected (estimated)", date_offset=-17, scale=100),
+        Entry("deaths", color="C10", label="recent deaths (scaled)", duration_days=14, date_offset=-7, scale=150),
         ]
     datasets = {}
     for entry in entries:

@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.dates as mdates
 import numpy as np
-from numpy import polyfit
 
 # Path for saving output images, set to None if you do not want to save
 save_dir = "figures"
@@ -126,7 +125,7 @@ def load_data(filename):
 
 
 def fit_log_slope(data_x, data_y, days_fit, days_extrapolate):
-    slope, offset = polyfit(range(days_fit), np.log(data_y[-days_fit:]), 1)
+    slope, offset = np.polyfit(range(days_fit), np.log(data_y[-days_fit:]), 1)
     n_days = days_fit + days_extrapolate
     fit_x = [0, n_days]
     fit_y = np.exp(np.array(fit_x) * slope + offset)
@@ -167,7 +166,7 @@ def plot_rate_dataset_entry(axis, dates, values, entry):
     rate = []
     # Determine slope in a sliding window (definitely not an efficient way to do this)
     for start in range(len(data_y) - days_fit):
-        slope, offset = polyfit(range(days_fit), np.log(data_y[start:start+days_fit]), 1)
+        slope, offset = np.polyfit(range(days_fit), np.log(data_y[start:start+days_fit]), 1)
         rate.append(slope / math.log(2) if slope < 10 else float('nan'))
     label = entry.label
     axis.scatter(data_x, rate, label=label, color=entry.color)
@@ -229,7 +228,6 @@ def main(countries, filename_pattern):
         Entry("deaths", color="C3"),
         Entry("deaths", color="C10", label="recent deaths (scaled)", duration_days=14, date_offset=-7, scale=150),
         Entry("deaths", color="C5", label="infected (estimated)", date_offset=-17, scale=100),
-        Entry("deaths", color="C10", label="recent deaths (scaled)", duration_days=14, date_offset=-7, scale=150),
         ]
     datasets = {}
     for entry in entries:

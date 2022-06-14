@@ -1,3 +1,6 @@
+![Figure_2](https://user-images.githubusercontent.com/62874576/173602522-135fcb09-5c15-4673-9b0a-75310ea678f3.png)
+*Snapshot of the statistics for Germany.  The number of days corresponds to the extrapolated doubling time (or half-life, in case of negative values).  Recovery data has only been reported until mid 2021.  Since the reported death tolls tend to be the most reliable data, some experimental estimates of the number of infections derived from these numbers have been added (in dark blue and brown) - it is interesting to compare those to the official data.  See the text below for further important information about interpreting the plot and the assumptions that were made in its production.*
+
 # Corona Log Figures
 
 Using [COVID-19 data](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series "Github page from which tables with virus data in csv format can be downloaded") provided by the Johns Hopkins University, this script creates some basic figures (using *matplotlib*) using a logarithmic scale for the y-axis.
